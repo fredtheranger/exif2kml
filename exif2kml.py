@@ -74,6 +74,8 @@ def get_lat_long(exif):
 parser = argparse.ArgumentParser()
 parser.add_argument("path", help="path to directory or file you want to use")
 parser.add_argument("-d", "--directory", help="treat path as a directory, not a file", action="store_true")
+parser.add_argument("-o", "--output", help="name of output file", default="output.kml")
+parser.add_argument("-n", "--name", help="value of name element in KML output", default="exif2xml")
 args = parser.parse_args()
 
 # Check if path is valid directory or file
@@ -88,15 +90,21 @@ else:
     files = [ args.path ]
     
 ### EXTRACT GPS DATA AND BUILD KML ###
-kml = Kml(name='assignment5')
+kml = Kml(name=args.name)
 
+cnt = 0
 for fname in files:
     image = Image.open(fname)
     exif = extract_gpsinfo_from_image(image)
     latitude, longitude = get_lat_long(exif['GPSInfo'])
     
-    print 'Adding %s at %s, %s...' % ( fname, latitude, longitude )
-    kml.newpoint(name=os.path.basename(fname), coords=[(longitude, latitude)])    
+    print 'Adding %s at %s, %s...' % ( os.path.basename(fname), longitude, latitude )
+    descr = '%s, %s' % ( longitude, latitude )
+    kml.newpoint(name=os.path.basename(fname),
+                description=descr,
+                coords=[(longitude, latitude)])
+    cnt = cnt + 1
     
-kml.save('assignment5.kml')
-print kml.kml()
+kml.save(args.output)
+#print kml.kml()
+print '\nSuccessfully parsed %s files and generated %s' % ( cnt, args.output )
